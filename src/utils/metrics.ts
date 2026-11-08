@@ -1,7 +1,88 @@
-import { Task, Habit, FocusSession } from '../types';
-import { dateKey, parseDate, daysBack, addDays } from './date';
-export function taskMetrics(tasks: Task[], day=dateKey()) { const active=tasks.filter(t=>!t.archived); const today=active.filter(t=>t.dueDate===day); const done=today.filter(t=>t.status==='done').length; return { total:today.length, done, pending:today.length-done, overdue:active.filter(t=>t.dueDate && t.dueDate<day && t.status!=='done').length, rate:today.length?Math.round(done/today.length*100):0 }; }
-export function habitDue(h: Habit, day: string) { return day >= h.createdAt.slice(0,10) && h.schedule.includes(parseDate(day).getDay()); }
-export function habitStreak(h: Habit, today=dateKey()) { let current=0, longest=0, run=0; const start=dateKey(new Date(h.createdAt)); for(let day=start;day<=today;day=addDays(day,1)) { if(!habitDue(h,day))continue; if(h.completions.includes(day)) {run++;longest=Math.max(longest,run);} else if(day!==today)run=0; } current=run; return {current,longest}; }
-export function habitConsistency(habits: Habit[], days: string[]) { let expected=0,done=0; habits.forEach(h=>days.forEach(day=>{if(habitDue(h,day)){expected++;if(h.completions.includes(day))done++;}}));return expected?Math.round(done/expected*100):0; }
-export function analytics(tasks:Task[],habits:Habit[],sessions:FocusSession[],count=7) { const days=daysBack(count); const completed=tasks.filter(t=>t.status==='done'&&t.completedAt&&days.includes(dateKey(new Date(t.completedAt)))); const due=tasks.filter(t=>!t.archived&&days.includes(t.dueDate)); return {days, completed:completed.length, rate:due.length?Math.round(due.filter(t=>t.status==='done').length/due.length*100):0, habits:habitConsistency(habits,days), focusMinutes:Math.round(sessions.filter(s=>s.kind==='focus'&&days.includes(dateKey(new Date(s.endedAt)))).reduce((n,s)=>n+s.duration,0)/60), bars:days.map(day=>({day,value:completed.filter(t=>dateKey(new Date(t.completedAt!))===day).length}))}; }
+import { Task, Habit, FocusSession } from "../types";
+import { dateKey, parseDate, daysBack, addDays } from "./date";
+export function taskMetrics(tasks: Task[], day = dateKey()) {
+  const active = tasks.filter((t) => !t.archived);
+  const today = active.filter((t) => t.dueDate === day);
+  const done = today.filter((t) => t.status === "done").length;
+  return {
+    total: today.length,
+    done,
+    pending: today.length - done,
+    overdue: active.filter(
+      (t) => t.dueDate && t.dueDate < day && t.status !== "done",
+    ).length,
+    rate: today.length ? Math.round((done / today.length) * 100) : 0,
+  };
+}
+export function habitDue(h: Habit, day: string) {
+  return (
+    day >= dateKey(new Date(h.createdAt)) &&
+    h.schedule.includes(parseDate(day).getDay())
+  );
+}
+export function habitStreak(h: Habit, today = dateKey()) {
+  let current = 0,
+    longest = 0,
+    run = 0;
+  const start = dateKey(new Date(h.createdAt));
+  for (let day = start; day <= today; day = addDays(day, 1)) {
+    if (!habitDue(h, day)) continue;
+    if (h.completions.includes(day)) {
+      run++;
+      longest = Math.max(longest, run);
+    } else if (day !== today) run = 0;
+  }
+  current = run;
+  return { current, longest };
+}
+export function habitConsistency(habits: Habit[], days: string[]) {
+  let expected = 0,
+    done = 0;
+  habits.forEach((h) =>
+    days.forEach((day) => {
+      if (habitDue(h, day)) {
+        expected++;
+        if (h.completions.includes(day)) done++;
+      }
+    }),
+  );
+  return expected ? Math.round((done / expected) * 100) : 0;
+}
+export function analytics(
+  tasks: Task[],
+  habits: Habit[],
+  sessions: FocusSession[],
+  count = 7,
+) {
+  const days = daysBack(count);
+  const completed = tasks.filter(
+    (t) =>
+      t.status === "done" &&
+      t.completedAt &&
+      days.includes(dateKey(new Date(t.completedAt))),
+  );
+  const due = tasks.filter((t) => !t.archived && days.includes(t.dueDate));
+  return {
+    days,
+    completed: completed.length,
+    rate: due.length
+      ? Math.round(
+          (due.filter((t) => t.status === "done").length / due.length) * 100,
+        )
+      : 0,
+    habits: habitConsistency(habits, days),
+    focusMinutes: Math.round(
+      sessions
+        .filter(
+          (s) =>
+            s.kind === "focus" && days.includes(dateKey(new Date(s.endedAt))),
+        )
+        .reduce((n, s) => n + s.duration, 0) / 60,
+    ),
+    bars: days.map((day) => ({
+      day,
+      value: completed.filter((t) => dateKey(new Date(t.completedAt!)) === day)
+        .length,
+    })),
+  };
+}

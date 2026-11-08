@@ -1,10 +1,151 @@
-import { Task, Project, Habit, Note, FocusSession } from '../types';
-import { dateKey, addDays, daysBack } from '../utils/date';
-export function demoData() { const today=dateKey(); const now=new Date().toISOString(); const base=(id:string)=>({id,createdAt:addDays(today,-20)+'T12:00:00.000Z',updatedAt:now});
- const projects:Project[]=[{...base('project-1'),title:'Studio refresh',description:'A thoughtful new home for our creative work.',icon:'Layers',color:'#7165E8',startDate:addDays(today,-10),deadline:addDays(today,8),status:'active'},{...base('project-2'),title:'A healthier me',description:'Small steps, stronger routines.',icon:'Heart',color:'#36B37E',startDate:addDays(today,-14),deadline:addDays(today,21),status:'active'},{...base('project-3'),title:'Weekend escape',description:'Make room for a little adventure.',icon:'Sun',color:'#F5A623',startDate:today,deadline:addDays(today,4),status:'active'}];
- const titles=['Review homepage concepts','Read 20 pages','Plan the next sprint','An evening walk','Send design handoff','Book a quiet weekend away','Organize inspiration board','Write project brief'];
- const tasks:Task[]=titles.map((title,i)=>({...base(`task-${i}`),title,description:['Explore a simpler layout and bring three ideas to our next review.','A little progress, every day.'][i%2],dueDate:i<4?today:i===4?addDays(today,-1):i===7?addDays(today,-2):addDays(today,i-4),dueTime:['09:00','07:30','11:00','18:00','16:00','10:00','14:00','09:00'][i],priority:i===0?'high':i===4?'urgent':i%2?'low':'medium',category:i%2?'Personal':'Work',tags:i%2?['wellbeing']:['design'],projectId:projects[i%3].id,subtasks:i===0?[{id:'sub-1',title:'Collect visual references',done:true},{id:'sub-2',title:'Sketch two directions',done:false}]:[],checklist:[],reminder:'none',recurrence:'none',attachments:[],status:i===1||i===7?'done':i===0?'progress':'todo',completedAt:i===1?now:i===7?addDays(today,-2)+'T12:00:00.000Z':undefined,archived:false,order:i}));
- const habits:Habit[]=[{...base('habit-1'),title:'Mindful mornings',description:'Ten minutes to find your calm.',color:'#7165E8',schedule:[0,1,2,3,4,5,6],reminder:'07:00',completions:daysBack(8).slice(0,-1)},{...base('habit-2'),title:'Move your body',description:'A walk, a stretch, a fresh start.',color:'#36B37E',schedule:[1,2,3,4,5],reminder:'18:00',completions:daysBack(7).filter(d=>[1,2,4].includes(new Date(d+'T12:00:00').getDay()))}];
- const notes:Note[]=[{...base('note-1'),title:'A little room to think',body:'Less noise. More intention.\n\nThings I want to make space for this week:\n• Uninterrupted creative time\n• A long walk without my phone\n• Finishing something before starting something new',category:'Personal',pinned:true},{...base('note-2'),title:'Studio ideas',body:'Warm neutrals. A generous use of whitespace.\n\nA homepage that feels like an invitation, with the work speaking for itself.',category:'Ideas',pinned:false}];
- const sessions:FocusSession[]=daysBack(7).flatMap((day,i)=>Array.from({length:i%3},(_,j)=>({...base(`session-${i}-${j}`),taskId:'task-0',duration:1500,endedAt:day+'T10:00:00.000Z',kind:'focus' as const})));
- return {tasks,projects,habits,notes,sessions}; }
+import { Task, Project, Habit, Note, FocusSession } from "../types";
+import { dateKey, addDays, daysBack } from "../utils/date";
+export function demoData() {
+  const today = dateKey();
+  const now = new Date().toISOString();
+  const base = (id: string) => ({
+    id,
+    createdAt: addDays(today, -20) + "T12:00:00.000Z",
+    updatedAt: now,
+  });
+  const projects: Project[] = [
+    {
+      ...base("project-1"),
+      title: "Studio refresh",
+      description: "A thoughtful new home for our creative work.",
+      icon: "Layers",
+      color: "#7165E8",
+      startDate: addDays(today, -10),
+      deadline: addDays(today, 8),
+      status: "active",
+    },
+    {
+      ...base("project-2"),
+      title: "A healthier me",
+      description: "Small steps, stronger routines.",
+      icon: "Heart",
+      color: "#36B37E",
+      startDate: addDays(today, -14),
+      deadline: addDays(today, 21),
+      status: "active",
+    },
+    {
+      ...base("project-3"),
+      title: "Weekend escape",
+      description: "Make room for a little adventure.",
+      icon: "Sun",
+      color: "#F5A623",
+      startDate: today,
+      deadline: addDays(today, 4),
+      status: "active",
+    },
+  ];
+  const titles = [
+    "Review homepage concepts",
+    "Read 20 pages",
+    "Plan the next sprint",
+    "An evening walk",
+    "Send design handoff",
+    "Book a quiet weekend away",
+    "Organize inspiration board",
+    "Write project brief",
+  ];
+  const tasks: Task[] = titles.map((title, i) => ({
+    ...base(`task-${i}`),
+    title,
+    description: [
+      "Explore a simpler layout and bring three ideas to our next review.",
+      "A little progress, every day.",
+    ][i % 2],
+    dueDate:
+      i < 4
+        ? today
+        : i === 4
+          ? addDays(today, -1)
+          : i === 7
+            ? addDays(today, -2)
+            : addDays(today, i - 4),
+    dueTime: [
+      "09:00",
+      "07:30",
+      "11:00",
+      "18:00",
+      "16:00",
+      "10:00",
+      "14:00",
+      "09:00",
+    ][i],
+    priority: i === 0 ? "high" : i === 4 ? "urgent" : i % 2 ? "low" : "medium",
+    category: i % 2 ? "Personal" : "Work",
+    tags: i % 2 ? ["wellbeing"] : ["design"],
+    projectId: projects[i % 3].id,
+    subtasks:
+      i === 0
+        ? [
+            { id: "sub-1", title: "Collect visual references", done: true },
+            { id: "sub-2", title: "Sketch two directions", done: false },
+          ]
+        : [],
+    checklist: [],
+    reminder: "none",
+    recurrence: "none",
+    attachments: [],
+    status: i === 1 || i === 7 ? "done" : i === 0 ? "progress" : "todo",
+    completedAt:
+      i === 1
+        ? now
+        : i === 7
+          ? addDays(today, -2) + "T12:00:00.000Z"
+          : undefined,
+    archived: false,
+    order: i,
+  }));
+  const habits: Habit[] = [
+    {
+      ...base("habit-1"),
+      title: "Mindful mornings",
+      description: "Ten minutes to find your calm.",
+      color: "#7165E8",
+      schedule: [0, 1, 2, 3, 4, 5, 6],
+      reminder: "07:00",
+      completions: daysBack(8).slice(0, -1),
+    },
+    {
+      ...base("habit-2"),
+      title: "Move your body",
+      description: "A walk, a stretch, a fresh start.",
+      color: "#36B37E",
+      schedule: [1, 2, 3, 4, 5],
+      reminder: "18:00",
+      completions: daysBack(7).filter((d) =>
+        [1, 2, 4].includes(new Date(d + "T12:00:00").getDay()),
+      ),
+    },
+  ];
+  const notes: Note[] = [
+    {
+      ...base("note-1"),
+      title: "A little room to think",
+      body: "Less noise. More intention.\n\nThings I want to make space for this week:\n• Uninterrupted creative time\n• A long walk without my phone\n• Finishing something before starting something new",
+      category: "Personal",
+      pinned: true,
+    },
+    {
+      ...base("note-2"),
+      title: "Studio ideas",
+      body: "Warm neutrals. A generous use of whitespace.\n\nA homepage that feels like an invitation, with the work speaking for itself.",
+      category: "Ideas",
+      pinned: false,
+    },
+  ];
+  const sessions: FocusSession[] = daysBack(7).flatMap((day, i) =>
+    Array.from({ length: i % 3 }, (_, j) => ({
+      ...base(`session-${i}-${j}`),
+      taskId: "task-0",
+      duration: 1500,
+      endedAt: day + "T10:00:00.000Z",
+      kind: "focus" as const,
+    })),
+  );
+  return { tasks, projects, habits, notes, sessions };
+}

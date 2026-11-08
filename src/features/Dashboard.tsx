@@ -1,12 +1,379 @@
-import React from 'react';
-import { View, Pressable, useWindowDimensions } from 'react-native';
-import { router } from 'expo-router';
-import { Bell, CheckCheck, Clock, ListTodo, Flame, ArrowUpRight, Timer, Layers, NotebookPen, Search, Plus } from 'lucide-react-native';
-import { Screen, ScreenHeader, Row, Label, AppCard, CircularProgress, Section, IconButton, AppButton, EmptyState } from '../components/ui';
-import { TaskCard, ProjectCard, HabitCard, StatCard } from '../components/cards';
-import { ActivityChart } from '../components/charts';
-import { useTasks, useProjects, useHabits, useFocus, usePreferences } from '../store';
-import { taskMetrics, analytics } from '../utils/metrics';
-import { dateKey, shortDate } from '../utils/date';
-import { useTheme } from '../theme';
-export default function Dashboard(){const t=useTheme();const tasks=useTasks(s=>s.items);const projects=useProjects(s=>s.items);const habits=useHabits(s=>s.items);const sessions=useFocus(s=>s.items);const name=usePreferences(s=>s.name);const metrics=taskMetrics(tasks);const stats=analytics(tasks,habits,sessions,7);const daily=analytics(tasks,habits,sessions,1);const today=dateKey();const hour=new Date().getHours();const wide=useWindowDimensions().width>800;const todays=tasks.filter(x=>x.dueDate===today&&!x.archived).sort((a,b)=>a.dueTime.localeCompare(b.dueTime));const deadlines=tasks.filter(x=>x.dueDate>today&&x.status!=='done'&&!x.archived).sort((a,b)=>a.dueDate.localeCompare(b.dueDate)).slice(0,3);return <Screen><Row style={{justifyContent:'space-between'}}><Row style={{gap:9}}><View style={{width:32,height:32,borderRadius:11,backgroundColor:t.primary,alignItems:'center',justifyContent:'center'}}><CheckCheck size={21} color="#fff"/></View><Label size={17} bold>super todo<Label color={t.primary}>.</Label></Label></Row><Row style={{gap:9}}><IconButton icon={Search} label="Search everything" onPress={()=>router.push('/search')}/><IconButton icon={Bell} label="Notification preferences" onPress={()=>router.push('/settings')}/><Pressable accessibilityLabel="Your profile" onPress={()=>router.push('/(tabs)/profile')} style={{width:42,height:42,borderRadius:15,backgroundColor:'#E9DCCB',alignItems:'center',justifyContent:'center'}}><Label color="#715D48" bold>{name.split(' ').map(n=>n[0]).join('').slice(0,2)}</Label></Pressable></Row></Row><View style={{gap:5,marginTop:12}}><Label muted size={12}>{new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}).toUpperCase()}</Label><Label size={30} bold>Good {hour<12?'morning':hour<17?'afternoon':'evening'}, {name.split(' ')[0]} <Label size={26}>☀</Label></Label><Label muted>Let’s make room for what matters.</Label></View><AppCard style={{backgroundColor:t.dark?t.elevated:'#EEEBFF',borderColor:t.dark?t.border:'#E7E2FF',padding:24}}><Row style={{justifyContent:'space-between'}}><View style={{flex:1,gap:8}}><Label color={t.primary} bold size={11}>YOUR DAILY MOMENTUM</Label><Label bold size={23}>{metrics.rate>=70?'You’re finding your flow.':'Small steps. Big possibilities.'}</Label><Label size={13} muted>{metrics.done} of {metrics.total} tasks complete today.</Label><Pressable accessibilityRole="button" onPress={()=>router.push('/(tabs)/insights')} style={{paddingTop:7}}><Label color={t.primary} bold size={12}>See your progress  ↗</Label></Pressable></View><CircularProgress value={metrics.rate} size={100}><Label size={25} bold>{metrics.rate}<Label size={13}>%</Label></Label><Label size={9} muted>DAILY SCORE</Label></CircularProgress></Row></AppCard><Row style={{flexWrap:'wrap'}}><StatCard label="TODAY’S TASKS" value={metrics.total} icon={ListTodo}/><StatCard label="COMPLETED" value={metrics.done} icon={CheckCheck} color={t.success}/><StatCard label="PENDING" value={metrics.pending} icon={Clock} color={t.warning}/></Row><Row style={{flexWrap:'wrap',gap:8}}>{[{label:'Projects',icon:Layers,path:'/projects'},{label:'Habits',icon:Flame,path:'/habits'},{label:'Focus',icon:Timer,path:'/focus'},{label:'Notes',icon:NotebookPen,path:'/notes'}].map(x=><Pressable key={x.label} onPress={()=>router.push(x.path as any)} accessibilityRole="button" style={{flex:1,minWidth:72,padding:14,alignItems:'center',gap:8,borderRadius:16,backgroundColor:t.surface,borderWidth:1,borderColor:t.border}}><x.icon size={20} color={t.primary}/><Label size={11} bold>{x.label}</Label></Pressable>)}</Row><View style={{flexDirection:wide?'row':'column',gap:24}}><View style={{flex:1,gap:12}}><Section title="Today’s tasks" action="View all" onPress={()=>router.push('/(tabs)/tasks')}/>{todays.map(task=><TaskCard key={task.id} task={task} compact/>)}{!todays.length&&<EmptyState title="Your day is wide open" description="Choose one thing you’d love to get done."/>}<AppButton title="Add a task" icon={Plus} variant="secondary" onPress={()=>router.push('/tasks/new')}/><Section title="Active projects" action="See all" onPress={()=>router.push('/projects')}/>{projects.filter(p=>p.status==='active').slice(0,2).map(project=><ProjectCard key={project.id} project={project}/>)}</View><View style={{flex:1,gap:12}}><Section title="Your weekly rhythm" action="Insights" onPress={()=>router.push('/(tabs)/insights')}/><AppCard><Row style={{justifyContent:'space-between'}}><View><Label bold size={24}>{stats.completed} <Label size={12} muted>tasks completed</Label></Label><Label muted size={11}>A little progress adds up.</Label></View><View style={{padding:9,backgroundColor:t.primary+'12',borderRadius:12}}><ArrowUpRight size={20} color={t.primary}/></View></Row><ActivityChart data={stats.bars}/></AppCard><Section title="Daily rituals" action="All habits" onPress={()=>router.push('/habits')}/>{habits.slice(0,2).map(h=><HabitCard key={h.id} habit={h}/>)}<AppCard onPress={()=>router.push('/focus')} style={{backgroundColor:t.dark?t.elevated:'#EDF5F1'}}><Row><View style={{padding:12,backgroundColor:t.success+'18',borderRadius:14}}><Timer size={24} color={t.success}/></View><View style={{flex:1}}><Label bold>Find your focus</Label><Label muted size={12}>{daily.focusMinutes} minutes of deep work today</Label></View><ArrowUpRight size={19} color={t.success}/></Row></AppCard></View></View><Section title="On the horizon" action="Calendar" onPress={()=>router.push('/(tabs)/calendar')}/>{deadlines.length?deadlines.map(task=><AppCard key={task.id} onPress={()=>router.push(`/tasks/${task.id}`)} style={{padding:16}}><Row><View style={{backgroundColor:t.elevated,padding:10,borderRadius:12}}><Label bold color={t.primary} size={12}>{shortDate(task.dueDate)}</Label></View><View style={{flex:1}}><Label bold>{task.title}</Label><Label size={12} muted>{task.category}</Label></View><ArrowUpRight size={18} color={t.muted}/></Row></AppCard>):<Label muted>No upcoming deadlines. Enjoy the breathing room.</Label>}{metrics.overdue>0&&<AppCard onPress={()=>router.push({pathname:'/(tabs)/tasks',params:{filter:'Overdue'}})}><Label color={t.danger}>{metrics.overdue} overdue {metrics.overdue===1?'task needs':'tasks need'} a fresh plan →</Label></AppCard>}<Label muted size={12} style={{textAlign:'center',paddingVertical:14}}>“You don’t have to do it all. Just the next right thing.”</Label></Screen>;}
+import React from "react";
+import { View, Pressable, useWindowDimensions } from "react-native";
+import { router } from "expo-router";
+import {
+  Bell,
+  CheckCheck,
+  Clock,
+  ListTodo,
+  Flame,
+  ArrowUpRight,
+  Timer,
+  Layers,
+  NotebookPen,
+  Search,
+  Plus,
+} from "lucide-react-native";
+import {
+  Screen,
+  Row,
+  Label,
+  AppCard,
+  CircularProgress,
+  Section,
+  IconButton,
+  AppButton,
+  EmptyState,
+} from "../components/ui";
+import {
+  TaskCard,
+  ProjectCard,
+  HabitCard,
+  StatCard,
+} from "../components/cards";
+import { ActivityChart } from "../components/charts";
+import {
+  useTasks,
+  useProjects,
+  useHabits,
+  useFocus,
+  usePreferences,
+} from "../store";
+import { taskMetrics, analytics } from "../utils/metrics";
+import { dateKey, shortDate } from "../utils/date";
+import { useTheme } from "../theme";
+export default function Dashboard() {
+  const t = useTheme();
+  const tasks = useTasks((s) => s.items);
+  const projects = useProjects((s) => s.items);
+  const habits = useHabits((s) => s.items);
+  const sessions = useFocus((s) => s.items);
+  const name = usePreferences((s) => s.name);
+  const metrics = taskMetrics(tasks);
+  const stats = analytics(tasks, habits, sessions, 7);
+  const daily = analytics(tasks, habits, sessions, 1);
+  const today = dateKey();
+  const hour = new Date().getHours();
+  const wide = useWindowDimensions().width > 800;
+  const todays = tasks
+    .filter((x) => x.dueDate === today && !x.archived)
+    .sort((a, b) => a.dueTime.localeCompare(b.dueTime));
+  const deadlines = tasks
+    .filter((x) => x.dueDate > today && x.status !== "done" && !x.archived)
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+    .slice(0, 3);
+  return (
+    <Screen>
+      <Row style={{ justifyContent: "space-between" }}>
+        <Row style={{ gap: 9 }}>
+          <View
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 11,
+              backgroundColor: t.primary,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <CheckCheck size={21} color="#fff" />
+          </View>
+          <Label size={17} bold>
+            super todo<Label color={t.primary}>.</Label>
+          </Label>
+        </Row>
+        <Row style={{ gap: 9 }}>
+          <IconButton
+            icon={Search}
+            label="Search everything"
+            onPress={() => router.push("/search")}
+          />
+          <IconButton
+            icon={Bell}
+            label="Notification preferences"
+            onPress={() => router.push("/settings")}
+          />
+          <Pressable
+            accessibilityLabel="Your profile"
+            onPress={() => router.push("/(tabs)/profile")}
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 15,
+              backgroundColor: "#E9DCCB",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Label color="#715D48" bold>
+              {name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .slice(0, 2)}
+            </Label>
+          </Pressable>
+        </Row>
+      </Row>
+      <View style={{ gap: 5, marginTop: 12 }}>
+        <Label muted size={12}>
+          {new Date()
+            .toLocaleDateString(undefined, {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            })
+            .toUpperCase()}
+        </Label>
+        <Label size={30} bold>
+          Good {hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening"},{" "}
+          {name.split(" ")[0]} <Label size={26}>☀</Label>
+        </Label>
+        <Label muted>Let’s make room for what matters.</Label>
+      </View>
+      <AppCard
+        style={{
+          backgroundColor: t.dark ? t.elevated : "#EEEBFF",
+          borderColor: t.dark ? t.border : "#E7E2FF",
+          padding: 24,
+        }}
+      >
+        <Row style={{ justifyContent: "space-between" }}>
+          <View style={{ flex: 1, gap: 8 }}>
+            <Label color={t.primary} bold size={11}>
+              YOUR DAILY MOMENTUM
+            </Label>
+            <Label bold size={23}>
+              {metrics.rate >= 70
+                ? "You’re finding your flow."
+                : "Small steps. Big possibilities."}
+            </Label>
+            <Label size={13} muted>
+              {metrics.done} of {metrics.total} tasks complete today.
+            </Label>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push("/(tabs)/insights")}
+              style={{ paddingTop: 7 }}
+            >
+              <Label color={t.primary} bold size={12}>
+                See your progress ↗
+              </Label>
+            </Pressable>
+          </View>
+          <CircularProgress value={metrics.rate} size={100}>
+            <Label size={25} bold>
+              {metrics.rate}
+              <Label size={13}>%</Label>
+            </Label>
+            <Label size={9} muted>
+              DAILY SCORE
+            </Label>
+          </CircularProgress>
+        </Row>
+      </AppCard>
+      <Row style={{ flexWrap: "wrap" }}>
+        <StatCard label="TODAY’S TASKS" value={metrics.total} icon={ListTodo} />
+        <StatCard
+          label="COMPLETED"
+          value={metrics.done}
+          icon={CheckCheck}
+          color={t.success}
+        />
+        <StatCard
+          label="PENDING"
+          value={metrics.pending}
+          icon={Clock}
+          color={t.warning}
+        />
+      </Row>
+      <Row style={{ flexWrap: "wrap", gap: 8 }}>
+        {[
+          { label: "Projects", icon: Layers, path: "/projects" },
+          { label: "Habits", icon: Flame, path: "/habits" },
+          { label: "Focus", icon: Timer, path: "/focus" },
+          { label: "Notes", icon: NotebookPen, path: "/notes" },
+        ].map((x) => (
+          <Pressable
+            key={x.label}
+            onPress={() => router.push(x.path as any)}
+            accessibilityRole="button"
+            style={{
+              flex: 1,
+              minWidth: 72,
+              padding: 14,
+              alignItems: "center",
+              gap: 8,
+              borderRadius: 16,
+              backgroundColor: t.surface,
+              borderWidth: 1,
+              borderColor: t.border,
+            }}
+          >
+            <x.icon size={20} color={t.primary} />
+            <Label size={11} bold>
+              {x.label}
+            </Label>
+          </Pressable>
+        ))}
+      </Row>
+      <View style={{ flexDirection: wide ? "row" : "column", gap: 24 }}>
+        <View style={{ flex: 1, gap: 12 }}>
+          <Section
+            title="Today’s tasks"
+            action="View all"
+            onPress={() => router.push("/(tabs)/tasks")}
+          />
+          {todays.map((task) => (
+            <TaskCard key={task.id} task={task} compact />
+          ))}
+          {!todays.length && (
+            <EmptyState
+              title="Your day is wide open"
+              description="Choose one thing you’d love to get done."
+            />
+          )}
+          <AppButton
+            title="Add a task"
+            icon={Plus}
+            variant="secondary"
+            onPress={() => router.push("/tasks/new")}
+          />
+          <Section
+            title="Active projects"
+            action="See all"
+            onPress={() => router.push("/projects")}
+          />
+          {projects
+            .filter((p) => p.status === "active")
+            .slice(0, 2)
+            .map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
+        </View>
+        <View style={{ flex: 1, gap: 12 }}>
+          <Section
+            title="Your weekly rhythm"
+            action="Insights"
+            onPress={() => router.push("/(tabs)/insights")}
+          />
+          <AppCard>
+            <Row style={{ justifyContent: "space-between" }}>
+              <View>
+                <Label bold size={24}>
+                  {stats.completed}{" "}
+                  <Label size={12} muted>
+                    tasks completed
+                  </Label>
+                </Label>
+                <Label muted size={11}>
+                  A little progress adds up.
+                </Label>
+              </View>
+              <View
+                style={{
+                  padding: 9,
+                  backgroundColor: t.primary + "12",
+                  borderRadius: 12,
+                }}
+              >
+                <ArrowUpRight size={20} color={t.primary} />
+              </View>
+            </Row>
+            <ActivityChart data={stats.bars} />
+          </AppCard>
+          <Section
+            title="Daily rituals"
+            action="All habits"
+            onPress={() => router.push("/habits")}
+          />
+          {habits.slice(0, 2).map((h) => (
+            <HabitCard key={h.id} habit={h} />
+          ))}
+          <AppCard
+            onPress={() => router.push("/focus")}
+            style={{ backgroundColor: t.dark ? t.elevated : "#EDF5F1" }}
+          >
+            <Row>
+              <View
+                style={{
+                  padding: 12,
+                  backgroundColor: t.success + "18",
+                  borderRadius: 14,
+                }}
+              >
+                <Timer size={24} color={t.success} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Label bold>Find your focus</Label>
+                <Label muted size={12}>
+                  {daily.focusMinutes} minutes of deep work today
+                </Label>
+              </View>
+              <ArrowUpRight size={19} color={t.success} />
+            </Row>
+          </AppCard>
+        </View>
+      </View>
+      <Section
+        title="On the horizon"
+        action="Calendar"
+        onPress={() => router.push("/(tabs)/calendar")}
+      />
+      {deadlines.length ? (
+        deadlines.map((task) => (
+          <AppCard
+            key={task.id}
+            onPress={() => router.push(`/tasks/${task.id}`)}
+            style={{ padding: 16 }}
+          >
+            <Row>
+              <View
+                style={{
+                  backgroundColor: t.elevated,
+                  padding: 10,
+                  borderRadius: 12,
+                }}
+              >
+                <Label bold color={t.primary} size={12}>
+                  {shortDate(task.dueDate)}
+                </Label>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Label bold>{task.title}</Label>
+                <Label size={12} muted>
+                  {task.category}
+                </Label>
+              </View>
+              <ArrowUpRight size={18} color={t.muted} />
+            </Row>
+          </AppCard>
+        ))
+      ) : (
+        <Label muted>No upcoming deadlines. Enjoy the breathing room.</Label>
+      )}
+      {metrics.overdue > 0 && (
+        <AppCard
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/tasks",
+              params: { filter: "Overdue" },
+            })
+          }
+        >
+          <Label color={t.danger}>
+            {metrics.overdue} overdue{" "}
+            {metrics.overdue === 1 ? "task needs" : "tasks need"} a fresh plan →
+          </Label>
+        </AppCard>
+      )}
+      <Label
+        muted
+        size={12}
+        style={{ textAlign: "center", paddingVertical: 14 }}
+      >
+        “You don’t have to do it all. Just the next right thing.”
+      </Label>
+    </Screen>
+  );
+}
